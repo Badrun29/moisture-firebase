@@ -14,8 +14,8 @@
 #include "addons/RTDBHelper.h"
 
 // Insert your network credentials
-#define WIFI_SSID "iPhone Kentang"
-#define WIFI_PASSWORD "44444444"
+#define WIFI_SSID "SM2"
+#define WIFI_PASSWORD "Sinarmas1"
 
 // Insert Firebase project API Key
 #define API_KEY "AIzaSyBnkCUlVyOtaz369WUwMbXQK700HMCtw7U"
@@ -30,22 +30,23 @@ FirebaseAuth auth;
 FirebaseConfig config;
 
 const int MOISTURE_PIN = A0;
-const int RELAY_PIN = D3;;
+int RELAY_PIN = D3;
+int RELAY_PIN1 = D3;
 const int MOISTURE_THRESHOLD = 500;
 
 //unsigned long sendDataPrevMillis = 0;
 //int count = 0;
 bool signupOK = false;
-
+String sValue, sValue2;
 void setup() {
   pinMode(RELAY_PIN, OUTPUT);
-  Serial.begin(9600);
+  Serial.begin(115200 );
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("Connecting to Wi-Fi");
   digitalWrite(RELAY_PIN, LOW);
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
-    delay(300);
+    delay(100);
   }
   Serial.println();
   Serial.print("Connected with IP: ");
@@ -75,9 +76,10 @@ void setup() {
 }
 
 void loop() {
-  delay(1000);
+  delay(3000);
 
   int moistureLevel = analogRead(MOISTURE_PIN);
+
 
   Serial.print("kelembaban tanah sebesar: ");
   Serial.println(moistureLevel);
@@ -95,20 +97,36 @@ void loop() {
       Serial.println("FAILED");
       Serial.println("REASON: " + fbdo.errorReason());
     }
+    if (moistureLevel > MOISTURE_THRESHOLD) {
+      // Turn on the relay
+      digitalWrite(RELAY_PIN, HIGH);
+    } else {
+      // Turn off the relay
+      digitalWrite(RELAY_PIN, LOW);
+    }
+    if (Firebase.RTDB.getString(&fbdo, "/DHT/relay")) {
+      if (fbdo.dataType() == "string") {
+        sValue = fbdo.stringData();
+        int a = sValue.toInt();
+        Serial.println(a);
+        if (a == 1) {
+          digitalWrite(RELAY_PIN, HIGH);
+        } else {
+          digitalWrite(RELAY_PIN, LOW);
+        }
+      }
+    }
+    else {
+      Serial.println(fbdo.errorReason());
+    }
 
-  if (moistureLevel > MOISTURE_THRESHOLD) {
-    // Turn on the relay
-    digitalWrite(RELAY_PIN, HIGH);
-    Serial.print("Tanah Kering");
-    
-  } else {
-    // Turn off the relay
-    digitalWrite(RELAY_PIN, LOW);
-    Serial.print("Tanah Kering");
+
+
+    // Wait for 1 second
+    delay(3000);
+
+
+
   }
 
-
-
-  }
-  Serial.println("______________________________");
 }
