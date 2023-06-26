@@ -6,36 +6,31 @@
 #endif
 #include <Firebase_ESP_Client.h>
 
-
-
-//Provide the token generation process info.
 #include "addons/TokenHelper.h"
-//Provide the RTDB payload printing info and other helper functions.
+
 #include "addons/RTDBHelper.h"
 
-// Insert your network credentials
-#define WIFI_SSID "SM2"
-#define WIFI_PASSWORD "Sinarmas1"
+// ini untuk konfugurasi wifi
+#define WIFI_SSID "iPhone kentang"
+#define WIFI_PASSWORD "44444444"
 
-// Insert Firebase project API Key
+//API KEY FIREBASE UNTUK KIRIM DATA KE FIREBASE
 #define API_KEY "AIzaSyBnkCUlVyOtaz369WUwMbXQK700HMCtw7U"
-
-// Insert RTDB URLefine the RTDB URL */
 #define DATABASE_URL "https://moisture-c02cc-default-rtdb.firebaseio.com"
 
-//Define Firebase Data object
+
 FirebaseData fbdo;
 
 FirebaseAuth auth;
 FirebaseConfig config;
 
+// DEFINE VARIABLE PIN SENSOR DAN RELAY
 const int MOISTURE_PIN = A0;
 int RELAY_PIN = D3;
 int RELAY_PIN1 = D3;
-const int MOISTURE_THRESHOLD = 500;
+const int MOISTURE_THRESHOLD = 600;
 
-//unsigned long sendDataPrevMillis = 0;
-//int count = 0;
+
 bool signupOK = false;
 String sValue, sValue2;
 void setup() {
@@ -53,13 +48,13 @@ void setup() {
   Serial.println(WiFi.localIP());
   Serial.println();
 
-  /* Assign the api key (required) */
+
   config.api_key = API_KEY;
 
-  /* Assign the RTDB URL (required) */
+
   config.database_url = DATABASE_URL;
 
-  /* Sign up */
+
   if (Firebase.signUp(&config, &auth, "", "")) {
     Serial.println("ok");
     signupOK = true;
@@ -68,7 +63,7 @@ void setup() {
     Serial.printf("%s\n", config.signer.signupError.message.c_str());
   }
 
-  /* Assign the callback function for the long running token generation task */
+
   config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
   Firebase.begin(&config, &auth);
@@ -76,8 +71,9 @@ void setup() {
 }
 
 void loop() {
-  delay(3000);
+  delay(1000);
 
+  // VARIABEL UNTUK MEMBACA NILAI SENSOR
   int moistureLevel = analogRead(MOISTURE_PIN);
 
 
@@ -87,7 +83,7 @@ void loop() {
   if (Firebase.ready() && signupOK ) {
 
 
-    // Write an Float number on the database path test/float
+    // UNTUK MENGIRIMKAN DATA SENSOR KE FIREBASE
     if (Firebase.RTDB.setFloat(&fbdo, "DHT/temperature", moistureLevel)) {
       Serial.println("PASSED");
       Serial.print("Kelembaban Tanah: ");
@@ -97,19 +93,12 @@ void loop() {
       Serial.println("FAILED");
       Serial.println("REASON: " + fbdo.errorReason());
     }
-    if (moistureLevel > MOISTURE_THRESHOLD) {
-      // Turn on the relay
-      digitalWrite(RELAY_PIN, HIGH);
-    } else {
-      // Turn off the relay
-      digitalWrite(RELAY_PIN, LOW);
-    }
     if (Firebase.RTDB.getString(&fbdo, "/DHT/relay")) {
       if (fbdo.dataType() == "string") {
         sValue = fbdo.stringData();
         int a = sValue.toInt();
         Serial.println(a);
-        if (a == 1) {
+        if (a == 1 && moistureLevel > MOISTURE_THRESHOLD)  {
           digitalWrite(RELAY_PIN, HIGH);
         } else {
           digitalWrite(RELAY_PIN, LOW);
@@ -122,11 +111,7 @@ void loop() {
 
 
 
-    // Wait for 1 second
-    delay(3000);
-
-
-
   }
+
 
 }
